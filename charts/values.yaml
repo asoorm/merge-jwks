@@ -1,0 +1,47 @@
+merger:
+  kind: Deployment
+  replicaCount: 1
+  containerPort: 9000
+  uri: "/certs"
+  jwksEndpoints:
+    - "https://{oktaorg}.okta.com/oauth2/default/v1/keys"
+    - "https://{keycloak-host}/auth/realms/{keycloak-realm}/protocol/openid-connect/certs"
+  image:
+    repository: mangomm/merge-jwks
+    tag: 0.6
+    pullPolicy: Always
+  imagePullSecrets: "private"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  nodeSelector: {}
+  tolerations: {}
+  affinity: {}
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 0.5
+    limits:
+      cpu: 0.5
+  securityContext:
+    runAsUser: 1000
+    fsGroup: 2000
+  containerSecurityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    privileged: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - all
+  service:
+    type: NodePort
+    port: 80
+    externalTrafficPolicy: Local
+    annotations: {}
+  hpa:
+    enabled: false
+    maxReplicas: 10
+    minReplicas: 2
+    targetCPUUtilizationPercentage: 80

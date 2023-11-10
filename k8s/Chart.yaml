@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: 1.0.0
-description: jwks
-name: jwks
-version: 0.0.1

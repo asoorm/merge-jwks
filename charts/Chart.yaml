@@ -1,0 +1,7 @@
+apiVersion: v1
+version: 0.0.2
+appVersion: 0.0.6
+name: merge-jwks
+description: |-
+  Make it easier to validate JWT tokens with multiple issuers.
+  The merge_jwks microservice will pull in, merge and normalise the JWKs from your configured JWKs URIs, and expose it's own JWKS_URI.
