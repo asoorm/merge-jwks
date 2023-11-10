@@ -3,7 +3,6 @@ kind: Secret
 type: Opaque
 metadata:
   name: tyk-operator-conf
-  namespace: tyk
 data:
   TYK_AUTH: dG9wc2VjcmV0cGFzc3dvcmQ=
   TYK_MODE: Y2U=
