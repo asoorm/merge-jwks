@@ -31,4 +31,4 @@ spec:
   jwt_identity_base_field: sub
   jwt_policy_field_name: pol
   jwt_default_policies:
-    - tyk/httpbin
+    - httpbin/httpbin
