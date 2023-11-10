@@ -9,7 +9,7 @@ spec:
   active: true
   access_rights_array:
     - name: httpbin
-      namespace: tyk
+      namespace: httpbin
       versions:
         - Default
 ---
