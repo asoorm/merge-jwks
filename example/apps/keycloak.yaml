@@ -12,7 +12,7 @@ spec:
     path: example/resources/keycloak-operator
   destination:
     server: https://kubernetes.default.svc
-    namespace: tyk
+    namespace: keycloak
   syncPolicy:
     automated:
       prune: true
@@ -41,7 +41,7 @@ spec:
           postgresPassword: topsecretpassword
   destination:
     server: https://kubernetes.default.svc
-    namespace: tyk
+    namespace: keycloak
   syncPolicy:
     automated:
       prune: true
@@ -64,7 +64,7 @@ spec:
     path: example/resources/keycloak
   destination:
     server: https://kubernetes.default.svc
-    namespace: tyk
+    namespace: keycloak
   syncPolicy:
     automated:
       prune: true

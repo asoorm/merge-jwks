@@ -2,19 +2,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: httpbin
+  name: gluu
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: default
   source:
-    repoURL: https://github.com/asoorm/merge-jwks.git
-    targetRevision: update-helm
-    path: example/resources/httpbin
+    repoURL: https://gluufederation.github.io/cloud-native-edition/pygluu/kubernetes/templates/helm
+    chart: gluu
+    targetRevision: v1.8.27
+    helm:
+      releaseName: gluu
   destination:
     server: https://kubernetes.default.svc
-    namespace: httpbin
+    namespace: gluu
   syncPolicy:
     automated:
       prune: true

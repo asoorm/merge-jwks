@@ -70,3 +70,15 @@ You can access the Keycloak instance in your browser at [localhost:7000](http://
 Username: default@example.com
 Password: topsecretpassword
 ```
+
+Generate JWT from Keycloak:
+```
+curl -L -s -X POST 'http://localhost:7000/realms/keycloak-oauth/protocol/openid-connect/token' \
+   -H 'Content-Type: application/x-www-form-urlencoded' \
+   --data-urlencode 'client_id=keycloak-oauth' \
+   --data-urlencode 'grant_type=password' \
+   --data-urlencode 'client_secret=NoTgoLZpbrr5QvbNDIRIvmZOhe9wI0r0' \
+   --data-urlencode 'scope=openid' \
+   --data-urlencode 'username=user@example.com' \
+   --data-urlencode 'password=topsecretpassword' | jq -r '.access_token'
+```
