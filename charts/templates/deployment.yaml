@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: {{ .Values.merger.kind }}
+metadata:
+  name: merge-jwks-{{ .Release.Name }}
+  labels:
+    app: merge-jwks
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+{{- if eq .Values.merger.kind "Deployment" }}
+  replicas: {{ .Values.merger.replicaCount }}
+{{- end }}
+  revisionHistoryLimit: 1
+  minReadySeconds: 30
+{{- if .Values.merger.strategy }}
+  strategy:
+{{ toYaml .Values.merger.strategy | indent 4 }}
+{{- end }}
+  selector:
+    matchLabels:
+      app: merge-jwks
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: merge-jwks
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+{{- if .Values.merger.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.merger.nodeSelector | indent 8 }}
+{{- end }}
+{{- if .Values.merger.tolerations }}
+      tolerations:
+{{ toYaml .Values.merger.tolerations | indent 8 }}
+{{- end }}
+{{- if .Values.merger.affinity }}
+      affinity:
+{{ toYaml .Values.merger.affinity | indent 8 }}
+{{- end }}
+{{- if .Values.merger.securityContext }}
+      securityContext:
+{{- toYaml .Values.merger.securityContext | nindent 8 }}
+{{- end }}
+      containers:
+      - name: merge-jwks-{{.Release.Name}}
+        image: "{{ .Values.merger.image.repository }}:{{ .Values.merger.image.tag }}"
+        imagePullPolicy: {{ .Values.merger.image.pullPolicy }}
+{{- if .Values.merger.resources }}
+        resources:
+{{ toYaml .Values.merger.resources | indent 10 }}
+{{- end }}
+{{- if .Values.merger.containerSecurityContext }}
+        securityContext:
+{{- toYaml .Values.merger.containerSecurityContext | nindent 10 }}
+{{- end }}
+        volumeMounts:
+          - mountPath: /opt/merge_jwks/config.yaml
+            name: secret
+            subPath: config.yaml
+        ports:
+          - containerPort: {{ .Values.merger.containerPort }}
+            name: http
+          - containerPort: {{ .Values.merger.containerPort }}
+            name: http-health
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.merger.containerPort }}
+          failureThreshold: 3
+          initialDelaySeconds: 200
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 50
+        readinessProbe:
+          tcpSocket:
+            port: {{ .Values.merger.containerPort }}
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 5
+      imagePullSecrets:
+      - name: "{{ .Values.merger.imagePullSecrets }}"
+      volumes:
+      - name: secret
+        secret:
+          secretName: merge-jwks-{{.Release.Name}}-secret

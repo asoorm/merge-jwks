@@ -1,4 +1,0 @@
-jwks:
-  namespace: private
-  dockerimage: mangomm/merge-jwks:0.6
-  pullsecrets: private-secret
