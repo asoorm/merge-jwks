@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/rsa"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -137,31 +134,15 @@ func TranslateJWKSet(in *jose.JSONWebKeySet) ([]jwksTmpl, error) {
 	for _, v := range in.Keys {
 		switch key := v.Key.(type) {
 		case *rsa.PublicKey:
-			// throw away non signing public key
+			// throw away non-signing public keys
 			if v.Use != "sig" {
 				continue
 			}
 
-			x509Bytes, _ := x509.MarshalPKIXPublicKey(key)
-
-			block := &pem.Block{
-				Bytes: x509Bytes,
+			var X5c []string
+			for _, cert := range v.Certificates {
+				X5c = append(X5c, base64.StdEncoding.EncodeToString(cert.Raw))
 			}
-
-			buf := new(bytes.Buffer)
-			if err := pem.Encode(buf, block); err != nil {
-				writeLog("problem pem encoding block: %s", err.Error())
-				continue
-			}
-
-			rawB64 := ""
-			s := bufio.NewScanner(buf)
-			for s.Scan() {
-				rawB64 += s.Text()
-			}
-
-			// strip headers
-			rawB64 = rawB64[16 : len(rawB64)-14]
 
 			// make a big enough byte slice
 			e := make([]byte, 8)
@@ -177,7 +158,7 @@ func TranslateJWKSet(in *jose.JSONWebKeySet) ([]jwksTmpl, error) {
 				Use: v.Use,
 				N:   strings.TrimRight(base64.URLEncoding.EncodeToString(key.N.Bytes()), "="),
 				E:   strings.TrimRight(base64.URLEncoding.EncodeToString(e), "="),
-				X5C: []string{rawB64},
+				X5C: X5c,
 			})
 		}
 	}
