@@ -1,4 +1,4 @@
-FROM golang:1.13.1-alpine as build
+FROM golang:1.21-alpine3.18 as build
 
 ARG version
 
@@ -24,7 +24,7 @@ RUN cd /go/src/github.com/asoorm/tyk-go-plugins && \
     cd merge_jwks && \
     go build -ldflags="-X 'main.GitCommit=${GIT_COMMIT}' -X 'main.GitTag=${GIT_TAG}' -s -w" -a -i .
 
-FROM alpine:3.11
+FROM alpine:3.18
 RUN apk --no-cache add ca-certificates && \
     adduser -D -g merge_jwks merge_jwks
 USER merge_jwks
