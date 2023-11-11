@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -64,7 +67,7 @@ func main() {
 	http.HandleFunc(appConf.JWKSUri, MergeJWKSHandler(appConf.Merge))
 
 	writeLog("starting server on: %s", appConf.Address)
-	err = http.ListenAndServe(":9000", nil)
+	err = http.ListenAndServe(appConf.Address, nil)
 	fatalOnError(err, "unable to start listener")
 }
 
@@ -140,8 +143,32 @@ func TranslateJWKSet(in *jose.JSONWebKeySet) ([]jwksTmpl, error) {
 			}
 
 			var X5c []string
-			for _, cert := range v.Certificates {
-				X5c = append(X5c, base64.StdEncoding.EncodeToString(cert.Raw))
+			if len(v.Certificates) > 0 {
+				for _, cert := range v.Certificates {
+					X5c = append(X5c, base64.StdEncoding.EncodeToString(cert.Raw))
+				}
+			} else {
+				x509Bytes, _ := x509.MarshalPKIXPublicKey(key)
+
+				block := &pem.Block{
+					Bytes: x509Bytes,
+				}
+
+				buf := new(bytes.Buffer)
+				if err := pem.Encode(buf, block); err != nil {
+					writeLog("problem pem encoding block: %s", err.Error())
+					continue
+				}
+
+				rawB64 := ""
+				s := bufio.NewScanner(buf)
+				for s.Scan() {
+					rawB64 += s.Text()
+				}
+
+				// strip headers
+				rawB64 = rawB64[16 : len(rawB64)-14]
+				X5c = []string{rawB64}
 			}
 
 			// make a big enough byte slice
