@@ -5,5 +5,5 @@ address: ":9000"
 jwks_uri: "/certs"
 
 merge:
-#  - "https://{oktaorg}.okta.com/oauth2/default/v1/keys"
-#  - "https://{keycloak-host}/auth/realms/{keycloak-realm}/protocol/openid-connect/certs"
+  - https://keycloak.asoorm.do.poc.tyk.technology/realms/master/protocol/openid-connect/certs
+  - https://keycloak.asoorm.do.poc.tyk.technology/realms/asoorm/protocol/openid-connect/certs
