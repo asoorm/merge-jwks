@@ -4,7 +4,7 @@
 
 Make it easier to validate JWT tokens with multiple issuers.
 
-The merge_jwks microservice will pull in, merge and normalise the JWKS from your configured
+The merge  microservice will pull in, merge and normalise the JWKS from your configured
 JWKS URIs, and expose it's own JWKS_URI.
 
 You can now easily call the `/certs` endpoint and use this as your new JWKS uri whenever you
