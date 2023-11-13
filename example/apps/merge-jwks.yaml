@@ -1,0 +1,29 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: merge-jwks
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    path: chart
+    repoURL: https://github.com/asoorm/merge-jwks
+    targetRevision: update-helm
+    helm:
+      releaseName: merge-jwks
+      values: |
+        merger:
+          jwksEndpoints:
+            - http://keycloak-service.keycloak.svc:7000/realms/keycloak-oauth/protocol/openid-connect/certs
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: merge-jwks
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

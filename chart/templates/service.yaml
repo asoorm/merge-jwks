@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: merge-jwks-{{ .Release.Name }}-svc
+  labels:
+    app: merge-jwks
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+{{ toYaml .Values.merger.service.annotations | indent 4 }}
+spec:
+  type: {{ .Values.merger.service.type }}
+  ports:
+  - port: {{ .Values.merger.service.port }}
+    targetPort: {{ .Values.merger.containerPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: merge-jwks
+    release: {{ .Release.Name }}
+{{- if eq .Values.merger.service.type "LoadBalancer" }}
+  externalTrafficPolicy: {{ .Values.merger.service.externalTrafficPolicy }}
+{{- end }}

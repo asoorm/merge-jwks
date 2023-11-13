@@ -1,0 +1,19 @@
+{{- if .Values.merger.hpa.enabled -}}
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: merge-jwks-{{ .Release.Name }}
+  labels:
+    app: merge-jwks
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  maxReplicas: {{ .Values.merger.hpa.maxReplicas }}
+  minReplicas: {{ .Values.merger.hpa.minReplicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: {{ .Values.merger.kind }}
+    name: merge-jwks-{{ .Release.Name }}
+  targetCPUUtilizationPercentage: {{ .Values.merger.hpa.targetCPUUtilizationPercentage }}
+{{- end }}

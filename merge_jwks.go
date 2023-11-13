@@ -67,7 +67,7 @@ func main() {
 	http.HandleFunc(appConf.JWKSUri, MergeJWKSHandler(appConf.Merge))
 
 	writeLog("starting server on: %s", appConf.Address)
-	err = http.ListenAndServe(":9000", nil)
+	err = http.ListenAndServe(appConf.Address, nil)
 	fatalOnError(err, "unable to start listener")
 }
 
@@ -137,31 +137,39 @@ func TranslateJWKSet(in *jose.JSONWebKeySet) ([]jwksTmpl, error) {
 	for _, v := range in.Keys {
 		switch key := v.Key.(type) {
 		case *rsa.PublicKey:
-			// throw away non signing public key
+			// throw away non-signing public keys
 			if v.Use != "sig" {
 				continue
 			}
 
-			x509Bytes, _ := x509.MarshalPKIXPublicKey(key)
+			var X5c []string
+			if len(v.Certificates) > 0 {
+				for _, cert := range v.Certificates {
+					X5c = append(X5c, base64.StdEncoding.EncodeToString(cert.Raw))
+				}
+			} else {
+				x509Bytes, _ := x509.MarshalPKIXPublicKey(key)
 
-			block := &pem.Block{
-				Bytes: x509Bytes,
+				block := &pem.Block{
+					Bytes: x509Bytes,
+				}
+
+				buf := new(bytes.Buffer)
+				if err := pem.Encode(buf, block); err != nil {
+					writeLog("problem pem encoding block: %s", err.Error())
+					continue
+				}
+
+				rawB64 := ""
+				s := bufio.NewScanner(buf)
+				for s.Scan() {
+					rawB64 += s.Text()
+				}
+
+				// strip headers
+				rawB64 = rawB64[16 : len(rawB64)-14]
+				X5c = []string{rawB64}
 			}
-
-			buf := new(bytes.Buffer)
-			if err := pem.Encode(buf, block); err != nil {
-				writeLog("problem pem encoding block: %s", err.Error())
-				continue
-			}
-
-			rawB64 := ""
-			s := bufio.NewScanner(buf)
-			for s.Scan() {
-				rawB64 += s.Text()
-			}
-
-			// strip headers
-			rawB64 = rawB64[16 : len(rawB64)-14]
 
 			// make a big enough byte slice
 			e := make([]byte, 8)
@@ -177,7 +185,7 @@ func TranslateJWKSet(in *jose.JSONWebKeySet) ([]jwksTmpl, error) {
 				Use: v.Use,
 				N:   strings.TrimRight(base64.URLEncoding.EncodeToString(key.N.Bytes()), "="),
 				E:   strings.TrimRight(base64.URLEncoding.EncodeToString(e), "="),
-				X5C: []string{rawB64},
+				X5C: X5c,
 			})
 		}
 	}
