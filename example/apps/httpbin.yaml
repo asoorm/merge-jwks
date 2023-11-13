@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/asoorm/merge-jwks.git
-    targetRevision: update-helm
+    targetRevision: HEAD
     path: example/resources/httpbin
   destination:
     server: https://kubernetes.default.svc

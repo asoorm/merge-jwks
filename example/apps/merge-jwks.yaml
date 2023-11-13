@@ -11,7 +11,7 @@ spec:
   source:
     path: chart
     repoURL: https://github.com/asoorm/merge-jwks
-    targetRevision: update-helm
+    targetRevision: HEAD
     helm:
       releaseName: merge-jwks
       values: |
