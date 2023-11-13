@@ -8,7 +8,7 @@ merger:
     - "https://{keycloak-host}/auth/realms/{keycloak-realm}/protocol/openid-connect/certs"
   image:
     repository: mangomm/merge-jwks
-    tag: 0.6
+    tag: 0.8
     pullPolicy: Always
   imagePullSecrets: "private"
   strategy:
