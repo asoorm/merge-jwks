@@ -1,40 +1,18 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/binary"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
 	"sort"
-	"strings"
 
 	"github.com/spf13/viper"
 	"github.com/square/go-jose"
 )
-
-type jwksTmpl struct {
-	Kid string   `json:"kid,omitempty"`
-	Kty string   `json:"kty,omitempty"`
-	Alg string   `json:"alg,omitempty"`
-	Use string   `json:"use,omitempty"`
-	N   string   `json:"n,omitempty"`
-	E   string   `json:"e,omitempty"`
-	X5C []string `json:"x5c,omitempty"`
-}
-
-type jwksUriResponse struct {
-	Keys []jwksTmpl `json:"keys"`
-}
 
 type conf struct {
 	Address string   `mapstructure:"address"`
@@ -88,9 +66,8 @@ func writeLog(format string, args ...interface{}) {
 }
 
 func MergeJWKSHandler(jwksUris []string) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		var mergedJWKSObject jwksUriResponse
+		var mergedJWKSObject jose.JSONWebKeySet
 		// limit concurrency to the number of CPUs
 		resultArray := boundedParallelGet(jwksUris, runtime.NumCPU())
 
@@ -106,7 +83,7 @@ func MergeJWKSHandler(jwksUris []string) http.HandlerFunc {
 				continue
 			}
 
-			bodyBytes, err := ioutil.ReadAll(result.res.Body)
+			bodyBytes, err := io.ReadAll(result.res.Body)
 			if err != nil {
 				result.res.Body.Close()
 				writeLog("unable to read body, skipping: %s", err.Error())
@@ -117,12 +94,7 @@ func MergeJWKSHandler(jwksUris []string) http.HandlerFunc {
 			jsonWebKeySetJOSE := &jose.JSONWebKeySet{}
 			json.Unmarshal(bodyBytes, jsonWebKeySetJOSE)
 
-			keys, err := TranslateJWKSet(jsonWebKeySetJOSE)
-			if err != nil {
-				writeLog("error: ", err.Error())
-			}
-
-			mergedJWKSObject.Keys = append(mergedJWKSObject.Keys, keys...)
+			mergedJWKSObject.Keys = append(mergedJWKSObject.Keys, jsonWebKeySetJOSE.Keys...)
 		}
 
 		resBytes, _ := json.Marshal(mergedJWKSObject)
@@ -130,67 +102,6 @@ func MergeJWKSHandler(jwksUris []string) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		w.Write(resBytes)
 	}
-}
-
-func TranslateJWKSet(in *jose.JSONWebKeySet) ([]jwksTmpl, error) {
-	var keys []jwksTmpl
-	for _, v := range in.Keys {
-		switch key := v.Key.(type) {
-		case *rsa.PublicKey:
-			// throw away non-signing public keys
-			if v.Use != "sig" {
-				continue
-			}
-
-			var X5c []string
-			if len(v.Certificates) > 0 {
-				for _, cert := range v.Certificates {
-					X5c = append(X5c, base64.StdEncoding.EncodeToString(cert.Raw))
-				}
-			} else {
-				x509Bytes, _ := x509.MarshalPKIXPublicKey(key)
-
-				block := &pem.Block{
-					Bytes: x509Bytes,
-				}
-
-				buf := new(bytes.Buffer)
-				if err := pem.Encode(buf, block); err != nil {
-					writeLog("problem pem encoding block: %s", err.Error())
-					continue
-				}
-
-				rawB64 := ""
-				s := bufio.NewScanner(buf)
-				for s.Scan() {
-					rawB64 += s.Text()
-				}
-
-				// strip headers
-				rawB64 = rawB64[16 : len(rawB64)-14]
-				X5c = []string{rawB64}
-			}
-
-			// make a big enough byte slice
-			e := make([]byte, 8)
-			// fill it
-			binary.BigEndian.PutUint64(e, uint64(key.E))
-			// trim buffer of null values
-			e = bytes.TrimLeft(e, "\x00")
-
-			keys = append(keys, jwksTmpl{
-				Kid: v.KeyID,
-				Kty: "RSA",
-				Alg: v.Algorithm,
-				Use: v.Use,
-				N:   strings.TrimRight(base64.URLEncoding.EncodeToString(key.N.Bytes()), "="),
-				E:   strings.TrimRight(base64.URLEncoding.EncodeToString(e), "="),
-				X5C: X5c,
-			})
-		}
-	}
-
-	return keys, nil
 }
 
 // a struct to hold the result from each request including an index
