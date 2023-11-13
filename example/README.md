@@ -62,7 +62,7 @@ kubectl port-forward svc/gateway-svc-tyk-gateway --namespace tyk 8080
 
 You can expose Keycloak to your localhost using the following command:
 ```
-kubectl port-forward svc/keycloak-service --namespace tyk 7000
+kubectl port-forward svc/keycloak-service --namespace keyclaok 7000
 ```
 
 You can access the Keycloak instance in your browser at [localhost:7000](http://localhost:7000):
@@ -82,3 +82,10 @@ curl -L -s -X POST 'http://localhost:7000/realms/keycloak-oauth/protocol/openid-
    --data-urlencode 'username=user@example.com' \
    --data-urlencode 'password=topsecretpassword' | jq -r '.access_token'
 ```
+
+You can expose the merge-jwks to your localhost using the following command:
+```
+kubectl port-forward svc/merge-jwks-merge-jwks-svc --namespace merge-jwks 9000:80
+```
+
+You can access the certs endpoint in your browser at [localhost:9000/certs](http://localhost:9000/certs):
