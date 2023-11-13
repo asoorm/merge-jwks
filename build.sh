@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export VERSION=0.7
+export VERSION=0.8
 echo $VERSION
 
 git tag ${VERSION}
