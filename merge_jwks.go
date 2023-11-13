@@ -141,7 +141,7 @@ func boundedParallelGet(urls []string, concurrencyLimit int) []result {
 			semaphoreChan <- struct{}{}
 
 			// send the request and put the response in a result struct
-			// along with the index so we can sort them later along with
+			// along with the index, so we can sort them later along with
 			// any error that might have occoured
 			res, err := http.Get(url)
 			result := &result{i, res, err}
