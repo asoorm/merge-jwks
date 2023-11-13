@@ -5,7 +5,7 @@
 Make it easier to validate JWT tokens with multiple issuers.
 
 The merge  microservice will pull in, merge and normalise the JWKS from your configured
-JWKS URIs, and expose it's own jwks_uri.
+JWKS URIs, and expose its own jwks_uri.
 
 You can now easily call the `/certs` endpoint and use this as your new JWKS uri whenever you
 need to validate an access token.
@@ -44,21 +44,9 @@ e.g. Different social providers, or Okta for public clients, but Ping or Keycloa
 some Active Directory service for internal clients. Maybe you are migrating Identity Providers
 and you need to support both for a while.
 
-Now, our app we needs to know about 2 Idenetity provider endpoints. And based on the JWT
+Now, our app we needs to know about 2 Identity provider endpoints. And based on the JWT
 issuer claim, be able to guess, or discover which identity provider's JWKS_URI to query
 in order to pull the public key, and validate the access token.
-
-### Standardise the response output
-
-RFC7517 specifies that the use of the x5c parameter is optional within a JSON Web Key (JWK). 
-Despite being extremely useful for pretty much every service that uses certificates, some IdPs
-seem to be a bit MVP / Purist or just Lazy in terms of what they implement.
-
-As such, when looking up a KID to find the public certificate from the jwks_uri as specified in
-the OIDC discovery endpoint, it may be necessary to convert the (n) modulus & (e) exponent to an
-x5c certificate if not presented.
-
-https://tools.ietf.org/html/rfc7517#section-4.7
 
 ## Usage
 
@@ -80,10 +68,10 @@ merge:
 
 ```
 docker pull mangomm/merge-jwks:0.6
-merge_jwks % docker run -it -p 9000:9000 -v $(pwd)/config.yaml:/opt/merge_jwks/config.yaml mangomm/merge-jwks:0.6 
+merge_jwks % docker run -it -p 9000:9000 -v $(pwd)/config.yaml:/opt/merge_jwks/config.yaml mangomm/merge-jwks:0.8 
 Build information:
         commit: a00870ce4f3680b34ac2b42dffb1e84a1edfa2c1
-        tag: merge-jwks-0.6
+        tag: merge-jwks-0.8
 starting server on: :9000
 ```
 
