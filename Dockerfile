@@ -16,11 +16,11 @@ RUN apk update && apk upgrade && \
     cd merge-jwks && ls -al
 
 RUN cd /go/src/github.com/asoorm/merge-jwks && \
-    git checkout --force $version && \
+    git checkout --force ${version} && \
     export GIT_COMMIT=$(git rev-list -1 HEAD) && \
-    echo "commit: $GIT_COMMIT" && \
-    export GIT_TAG=$(git tag) && \
-    echo "tag: $GIT_TAG" && \
+    echo "commit: ${GIT_COMMIT}" && \
+    export GIT_TAG=$(git describe --tags) && \
+    echo "tag: ${GIT_TAG}" && \
     go build -ldflags="-X 'main.GitCommit=${GIT_COMMIT}' -X 'main.GitTag=${GIT_TAG}' -s -w" -a .
 
 FROM alpine:3.18
